@@ -12,24 +12,24 @@ describe('anchor-crowd-funding', () => {
   const program = anchor.workspace.AnchorCrowdFunding as Program<AnchorCrowdFunding>;
 
   // Creating campaign account
-  const campaignAuthority1 = anchor.web3.Keypair.generate();
-  const campaignAuthority2 = anchor.web3.Keypair.generate();
+  const lotteryAuthority1 = anchor.web3.Keypair.generate();
+  const lotteryAuthority2 = anchor.web3.Keypair.generate();
 
   it('Init campaign 1', async () => {
 
 
     let airdrop_amount = 5;
-    console.log("🌭 Airdropping", airdrop_amount, "SOL to campaignAuthority1 wallet...")
-    await airdrop(campaignAuthority1.publicKey, airdrop_amount, program.provider);
+    console.log("🌭 Airdropping", airdrop_amount, "SOL to lotteryAuthority1 wallet...")
+    await airdrop(lotteryAuthority1.publicKey, airdrop_amount, program.provider);
 
     // Add your test here.
     let campaignName = "testCampaign";
-    let campaignAuthority1_pk = campaignAuthority1.publicKey;
+    let lotteryAuthority1_pk = lotteryAuthority1.publicKey;
     let campaignDescription = "This is a test campaign description";
     let campaignImageLink = "https://whitewallapi.wpenginepowered.com/wp-content/uploads/2021/08/jenisu-cityscape-4-nft-1.png";
 
-    const [campaignAccount, bump] = await anchor.web3.PublicKey.findProgramAddress(
-      [campaignAuthority1.publicKey.toBuffer()],
+    const [lotteryAccount, bump] = await anchor.web3.PublicKey.findProgramAddress(
+      [lotteryAuthority1.publicKey.toBuffer()],
       program.programId
     );
 
@@ -39,17 +39,17 @@ describe('anchor-crowd-funding', () => {
       campaignImageLink,
       bump, {
         accounts: {
-          authority: campaignAuthority1_pk,
-          campaignAccount: campaignAccount,
+          authority: lotteryAuthority1_pk,
+          lotteryAccount: lotteryAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         },
-        signers: [campaignAuthority1]
+        signers: [lotteryAuthority1]
       }
     );
-    console.log("Created", campaignAccount.toString());
+    console.log("Created", lotteryAccount.toString());
 
     // tests
-    const account = await program.account.campaignAccount.fetch(campaignAccount);
+    const account = await program.account.lotteryAccount.fetch(lotteryAccount);
     console.log("CampaignAccount is", account.name)
     console.log("Amount donated is", new anchor.BN(account.amountDonated).toNumber())
   });
@@ -58,17 +58,17 @@ describe('anchor-crowd-funding', () => {
 
 
     let airdrop_amount = 10;
-    console.log("🌭 Airdropping", airdrop_amount, "SOL to campaignAuthority2 wallet...")
-    await airdrop(campaignAuthority2.publicKey, airdrop_amount, program.provider);
+    console.log("🌭 Airdropping", airdrop_amount, "SOL to lotteryAuthority2 wallet...")
+    await airdrop(lotteryAuthority2.publicKey, airdrop_amount, program.provider);
 
     // Add your test here.
     let campaignName = "Epic campaign";
-    let campaignAuthority2_pk = campaignAuthority2.publicKey;
+    let lotteryAuthority2_pk = lotteryAuthority2.publicKey;
     let campaignDescription = "Motherfucking epic campaign bitch";
     let campaignImageLink = "https://cdn.dribbble.com/users/6228692/screenshots/14692482/media/65a7784e995b32a7cd49fa9d4ed8e298.png";
 
-    const [campaignAccount, bump] = await anchor.web3.PublicKey.findProgramAddress(
-      [campaignAuthority2.publicKey.toBuffer()],
+    const [lotteryAccount, bump] = await anchor.web3.PublicKey.findProgramAddress(
+      [lotteryAuthority2.publicKey.toBuffer()],
       program.programId
     );
 
@@ -78,63 +78,63 @@ describe('anchor-crowd-funding', () => {
       campaignImageLink,
       bump, {
         accounts: {
-          authority: campaignAuthority2_pk,
-          campaignAccount: campaignAccount,
+          authority: lotteryAuthority2_pk,
+          lotteryAccount: lotteryAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         },
-        signers: [campaignAuthority2]
+        signers: [lotteryAuthority2]
       }
     );
-    console.log("Created", campaignAccount.toString());
+    console.log("Created", lotteryAccount.toString());
 
     // tests
-    const account = await program.account.campaignAccount.fetch(campaignAccount);
+    const account = await program.account.lotteryAccount.fetch(lotteryAccount);
     console.log("CampaignAccount is", account.name)
     console.log("Amount donated is", new anchor.BN(account.amountDonated).toNumber())
   });
 
 
-  it ('donating from campaignAuthority1 to both campaigns...', async () => {
+  it ('donating from lotteryAuthority1 to both campaigns...', async () => {
 
     let accounts = await program.provider.connection.getProgramAccounts(program.programId)
-    let campaignAuthority1_pk = campaignAuthority1.publicKey;
+    let lotteryAuthority1_pk = lotteryAuthority1.publicKey;
 
     for (let i=0; i< accounts.length; i++) {
 
-      let campaignAccount = accounts[i].pubkey
+      let lotteryAccount = accounts[i].pubkey
       let donation = 1 * LAMPORTS_PER_SOL
 
       const tx = await program.rpc.donate(
         new anchor.BN(donation), {
           accounts: {
-            authority: campaignAuthority1_pk,
-            campaignAccount: campaignAccount,
+            authority: lotteryAuthority1_pk,
+            lotteryAccount: lotteryAccount,
             systemProgram: anchor.web3.SystemProgram.programId,
           },
-          signers: [campaignAuthority1]
+          signers: [lotteryAuthority1]
         }
       );
 
       // tests
-      const account = await program.account.campaignAccount.fetch(campaignAccount);
-      console.log("Amount donated to",campaignAccount.toString() ,"is", new anchor.BN(account.amountDonated).toNumber()/LAMPORTS_PER_SOL)
+      const account = await program.account.lotteryAccount.fetch(lotteryAccount);
+      console.log("Amount donated to",lotteryAccount.toString() ,"is", new anchor.BN(account.amountDonated).toNumber()/LAMPORTS_PER_SOL)
 
-      let balance = await program.provider.connection.getBalance(campaignAccount)
-      console.log("Balance of", campaignAccount.toString(), "is", balance/LAMPORTS_PER_SOL)
+      let balance = await program.provider.connection.getBalance(lotteryAccount)
+      console.log("Balance of", lotteryAccount.toString(), "is", balance/LAMPORTS_PER_SOL)
     
-      console.log("Total donors to", campaignAccount.toString(), "are", account.contributors.map(c=> c.toString()))
+      console.log("Total gamblers to", lotteryAccount.toString(), "are", account.gamblers.map(c=> c.toString()))
 
     }
 
   });
 
-  it ('donating from campaignAuthority2 to owned campaign...', async () => {
+  it ('donating from lotteryAuthority2 to owned campaign...', async () => {
 
     let accounts = await program.provider.connection.getProgramAccounts(program.programId)
-    let campaignAuthority2_pk = campaignAuthority2.publicKey;
+    let lotteryAuthority2_pk = lotteryAuthority2.publicKey;
 
-    const [campaignAccount, bump] = await anchor.web3.PublicKey.findProgramAddress(
-      [campaignAuthority2.publicKey.toBuffer()],
+    const [lotteryAccount, bump] = await anchor.web3.PublicKey.findProgramAddress(
+      [lotteryAuthority2.publicKey.toBuffer()],
       program.programId
     );
 
@@ -143,84 +143,84 @@ describe('anchor-crowd-funding', () => {
     const tx = await program.rpc.donate(
       new anchor.BN(donation), {
         accounts: {
-          authority: campaignAuthority2_pk,
-          campaignAccount: campaignAccount,
+          authority: lotteryAuthority2_pk,
+          lotteryAccount: lotteryAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         },
-        signers: [campaignAuthority2]
+        signers: [lotteryAuthority2]
       }
     );
 
     // tests
-    const account = await program.account.campaignAccount.fetch(campaignAccount);
-    console.log("Amount donated to",campaignAccount.toString() ,"is", new anchor.BN(account.amountDonated).toNumber()/LAMPORTS_PER_SOL)
+    const account = await program.account.lotteryAccount.fetch(lotteryAccount);
+    console.log("Amount donated to",lotteryAccount.toString() ,"is", new anchor.BN(account.amountDonated).toNumber()/LAMPORTS_PER_SOL)
 
-    let balance = await program.provider.connection.getBalance(campaignAccount)
-    console.log("Balance of", campaignAccount.toString(), "is", balance/LAMPORTS_PER_SOL)
+    let balance = await program.provider.connection.getBalance(lotteryAccount)
+    console.log("Balance of", lotteryAccount.toString(), "is", balance/LAMPORTS_PER_SOL)
       
-    console.log("Total donors to", campaignAccount.toString(), "are", account.contributors.map(c=> c.toString()))
+    console.log("Total gamblers to", lotteryAccount.toString(), "are", account.gamblers.map(c=> c.toString()))
 
   });
 
   it('withdrawing from owned campaign ...', async () => {
 
-    let campaignAuthority1_pk = campaignAuthority1.publicKey;
-    const [campaignAccount, bump] = await anchor.web3.PublicKey.findProgramAddress(
-      [campaignAuthority1.publicKey.toBuffer()],
+    let lotteryAuthority1_pk = lotteryAuthority1.publicKey;
+    const [lotteryAccount, bump] = await anchor.web3.PublicKey.findProgramAddress(
+      [lotteryAuthority1.publicKey.toBuffer()],
       program.programId
     );
 
-    console.log("closing", campaignAccount.toString())
+    console.log("closing", lotteryAccount.toString())
     
     const tx = await program.rpc.withdraw(
       new anchor.BN(0.3*LAMPORTS_PER_SOL), {
         accounts: {
-          authority: campaignAuthority1_pk,
-          campaignAccount: campaignAccount,
+          authority: lotteryAuthority1_pk,
+          lotteryAccount: lotteryAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         },
-        signers: [campaignAuthority1]
+        signers: [lotteryAuthority1]
       }
     );
 
     // tests
-    const account = await program.account.campaignAccount.fetch(campaignAccount);
+    const account = await program.account.lotteryAccount.fetch(lotteryAccount);
     //console.log("CampaignAccount is", account)
     console.log("Amount donated decreased to", new anchor.BN(account.amountDonated).toNumber()/LAMPORTS_PER_SOL)
     
-    let balance = await program.provider.connection.getBalance(campaignAccount)
-    console.log("New balance of", campaignAccount.toString(), "is", balance/LAMPORTS_PER_SOL)
+    let balance = await program.provider.connection.getBalance(lotteryAccount)
+    console.log("New balance of", lotteryAccount.toString(), "is", balance/LAMPORTS_PER_SOL)
 
   })
 
   it('withdrawing from not owned campaign (should fail) ...', async () => {
 
-    let campaignAuthority1_pk = campaignAuthority1.publicKey;
-    const [campaignAccount, bump] = await anchor.web3.PublicKey.findProgramAddress(
-      [campaignAuthority2.publicKey.toBuffer()],
+    let lotteryAuthority1_pk = lotteryAuthority1.publicKey;
+    const [lotteryAccount, bump] = await anchor.web3.PublicKey.findProgramAddress(
+      [lotteryAuthority2.publicKey.toBuffer()],
       program.programId
     );
 
-    console.log("closing", campaignAccount.toString())
+    console.log("closing", lotteryAccount.toString())
     
     const tx = await program.rpc.withdraw(
       new anchor.BN(0.3*LAMPORTS_PER_SOL), {
         accounts: {
-          authority: campaignAuthority1_pk,
-          campaignAccount: campaignAccount,
+          authority: lotteryAuthority1_pk,
+          lotteryAccount: lotteryAccount,
           systemProgram: anchor.web3.SystemProgram.programId,
         },
-        signers: [campaignAuthority1]
+        signers: [lotteryAuthority1]
       }
     );
 
     // tests
-    const account = await program.account.campaignAccount.fetch(campaignAccount);
+    const account = await program.account.lotteryAccount.fetch(lotteryAccount);
     //console.log("CampaignAccount is", account)
     console.log("Amount donated decreased to", new anchor.BN(account.amountDonated).toNumber()/LAMPORTS_PER_SOL)
     
-    let balance = await program.provider.connection.getBalance(campaignAccount)
-    console.log("New balance of", campaignAccount.toString(), "is", balance/LAMPORTS_PER_SOL)
+    let balance = await program.provider.connection.getBalance(lotteryAccount)
+    console.log("New balance of", lotteryAccount.toString(), "is", balance/LAMPORTS_PER_SOL)
 
   })
 

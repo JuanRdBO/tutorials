@@ -17,13 +17,13 @@ pub mod anchor_crowd_funding {
     ) -> ProgramResult {
         let creator_account = &mut ctx.accounts.authority;
         
-        ctx.accounts.campaign_account.authority = creator_account.key();
-        ctx.accounts.campaign_account.name = name;
-        ctx.accounts.campaign_account.description = description;
-        ctx.accounts.campaign_account.image_link = image_link;
-        ctx.accounts.campaign_account.amount_donated = 0;
-        ctx.accounts.campaign_account.bump = bump;
-        ctx.accounts.campaign_account.contributors = [].to_vec();
+        ctx.accounts.lottery_account.authority = creator_account.key();
+        ctx.accounts.lottery_account.name = name;
+        ctx.accounts.lottery_account.description = description;
+        ctx.accounts.lottery_account.image_link = image_link;
+        ctx.accounts.lottery_account.amount_donated = 0;
+        ctx.accounts.lottery_account.bump = bump;
+        ctx.accounts.lottery_account.gamblers = [].to_vec();
 
         Ok(())
     }
@@ -37,7 +37,7 @@ pub mod anchor_crowd_funding {
         println!("Donating!");
 
         let from = &mut ctx.accounts.authority;
-        let to = &mut ctx.accounts.campaign_account;
+        let to = &mut ctx.accounts.lottery_account;
         let system_program = &ctx.accounts.system_program;
 
         invoke(
@@ -53,10 +53,10 @@ pub mod anchor_crowd_funding {
             ]
         )?;
 
-        let campaign_account = &mut ctx.accounts.campaign_account;
+        let lottery_account = &mut ctx.accounts.lottery_account;
 
-        campaign_account.amount_donated += donation;
-        campaign_account.contributors.push(from.key());
+        lottery_account.amount_donated += donation;
+        lottery_account.gamblers.push(from.key());
 
         Ok(())
     }
@@ -66,7 +66,7 @@ pub mod anchor_crowd_funding {
         withdraw_amount: u64
     ) -> ProgramResult {
         
-        let available_lamports = ctx.accounts.campaign_account.to_account_info().lamports();
+        let available_lamports = ctx.accounts.lottery_account.to_account_info().lamports();
 
         if available_lamports < withdraw_amount {
             return Err(ErrorCode::ExceededWithdrawAmount.into());
@@ -74,13 +74,13 @@ pub mod anchor_crowd_funding {
 
         **ctx
             .accounts
-            .campaign_account
+            .lottery_account
             .to_account_info()
             .try_borrow_mut_lamports()? -= withdraw_amount;
 
         **ctx.accounts.authority.try_borrow_mut_lamports()? += withdraw_amount;
 
-        ctx.accounts.campaign_account.amount_donated -= withdraw_amount;
+        ctx.accounts.lottery_account.amount_donated -= withdraw_amount;
 
         Ok(())
     }
@@ -94,10 +94,10 @@ pub struct Withdraw<'info> {
     #[account(
         mut,
         seeds = [authority.key().as_ref()],
-        bump = campaign_account.bump,
+        bump = lottery_account.bump,
         has_one = authority,
     )]
-    campaign_account: Account<'info, CampaignAccount>,
+    lottery_account: Account<'info, LotteryAccount>,
     system_program: AccountInfo<'info>
 }
 
@@ -106,7 +106,7 @@ pub struct Donate<'info> {
     #[account(mut, signer)]
     authority: AccountInfo<'info>,
     #[account(mut)]
-    campaign_account: Account<'info, CampaignAccount>,
+    lottery_account: Account<'info, LotteryAccount>,
     system_program: AccountInfo<'info>
 }
 
@@ -127,18 +127,18 @@ pub struct CreateCampaign<'info> {
         bump=bump,
         space=500
     )]
-    campaign_account: Account<'info, CampaignAccount>,
+    lottery_account: Account<'info, LotteryAccount>,
     system_program: AccountInfo<'info>
 }
 
 #[account]
-pub struct CampaignAccount {
+pub struct LotteryAccount {
     pub authority: Pubkey,
     pub name: String,
     pub description: String,
     pub image_link: String,
     pub amount_donated: u64,
-    pub contributors: Vec<Pubkey>,
+    pub gamblers: Vec<Pubkey>,
     pub bump: u8,
 }
 
