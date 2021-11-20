@@ -35,16 +35,11 @@ pub mod anchor_crowd_funding {
 
         println!("Donating!");
 
-        let seeds = &[
-                &ctx.accounts.authority.key().to_bytes()[..], 
-                &[ctx.accounts.campaign_account.bump]
-            ];
-
         let debtor = &mut ctx.accounts.authority;
         let creditor = &mut ctx.accounts.campaign_account;
         let system_program = &ctx.accounts.system_program;
 
-        invoke_signed(
+        invoke(
             &system_instruction::transfer(
                 &debtor.key(),
                 &creditor.key(), 
@@ -54,8 +49,7 @@ pub mod anchor_crowd_funding {
                 debtor.to_account_info().clone(),
                 creditor.to_account_info().clone(),
                 system_program.to_account_info().clone(),
-            ],
-            &[&seeds[..]]
+            ]
         )?;
 
         let campaign_account = &mut ctx.accounts.campaign_account;
@@ -109,12 +103,7 @@ pub struct Withdraw<'info> {
 pub struct Donate<'info> {
     #[account(mut, signer)]
     authority: AccountInfo<'info>,
-    #[account(
-        mut,
-        seeds = [authority.key().as_ref()],
-        bump = campaign_account.bump,
-        has_one = authority,
-    )]
+    #[account(mut)]
     campaign_account: Account<'info, CampaignAccount>,
     system_program: AccountInfo<'info>
 }
