@@ -93,7 +93,7 @@ describe('anchor-crowd-funding', () => {
     console.log("closing", campaignAccount.toString())
     
     const tx = await program.rpc.withdraw(
-      {
+      new anchor.BN(50), {
         accounts: {
           authority: campaignAuthority_pk,
           campaignAccount: campaignAccount,

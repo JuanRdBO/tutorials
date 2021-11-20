@@ -66,19 +66,36 @@ pub mod anchor_crowd_funding {
     }
 
     pub fn withdraw(
-        ctx: Context<Withdraw>
+        ctx: Context<Withdraw>,
+        withdraw_amount: u64
     ) -> ProgramResult {
+        let campaign_account = &mut ctx.accounts.campaign_account;
 
-/* 
-        let lamports = ctx.accounts.campaign_account.lamports();
+        if campaign_account.amount_donated < withdraw_amount {
+            return Err(ErrorCode::ExceededWithdrawAmount.into());
+        }
 
-        **ctx
-            .accounts
-            .campaign_account
-            .to_account_info()
-            .try_borrow_mut_lamports()? = 0;
+        let seeds = &[
+                &ctx.accounts.authority.key().to_bytes()[..], 
+                &[ctx.accounts.campaign_account.bump]
+            ];
 
-        **ctx.accounts.authority.try_borrow_mut_lamports()? += lamports;  */
+        let debtor = &mut ctx.accounts.campaign_account;
+        let creditor = &mut ctx.accounts.authority;
+        let system_program = &ctx.accounts.system_program;
+
+        invoke_signed(
+            &system_instruction::transfer(
+                &debtor.key(),
+                &creditor.key(), 
+                withdraw_amount),
+            &[
+                debtor.to_account_info().clone(),
+                creditor.to_account_info().clone(),
+                system_program.to_account_info().clone(),
+            ],
+            &[&seeds[..]]
+        )?;
 
         Ok(())
     }
@@ -90,8 +107,7 @@ pub struct Withdraw<'info> {
     #[account(mut, signer)]
     authority: AccountInfo<'info>,
     #[account(
-        mut, 
-        close = authority,
+        mut,
         seeds = [authority.key().as_ref()],
         bump = campaign_account.bump,
         has_one = authority,
