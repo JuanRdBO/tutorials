@@ -93,7 +93,7 @@ describe('anchor-crowd-funding', () => {
     console.log("closing", campaignAccount.toString())
     
     const tx = await program.rpc.withdraw(
-      new anchor.BN(50), {
+      new anchor.BN(1*LAMPORTS_PER_SOL), {
         accounts: {
           authority: campaignAuthority_pk,
           campaignAccount: campaignAccount,
@@ -105,9 +105,11 @@ describe('anchor-crowd-funding', () => {
 
     // tests
     const account = await program.account.campaignAccount.fetch(campaignAccount);
-    console.log("CampaignAccount is", account)
-    console.log("Amount donated is", new anchor.BN(account.amountDonated).toNumber())
-
+    //console.log("CampaignAccount is", account)
+    console.log("Amount donated decreased to", new anchor.BN(account.amountDonated).toNumber())
+    
+    let balance = await program.provider.connection.getBalance(campaignAccount)
+    console.log("New balance of", campaignAccount.toString(), "is", balance/LAMPORTS_PER_SOL)
 
   })
 });

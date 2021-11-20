@@ -69,33 +69,22 @@ pub mod anchor_crowd_funding {
         ctx: Context<Withdraw>,
         withdraw_amount: u64
     ) -> ProgramResult {
-        let campaign_account = &mut ctx.accounts.campaign_account;
+        
+        let available_lamports = ctx.accounts.campaign_account.to_account_info().lamports();
 
-        if campaign_account.amount_donated < withdraw_amount {
+        if available_lamports < withdraw_amount {
             return Err(ErrorCode::ExceededWithdrawAmount.into());
         }
 
-        let seeds = &[
-                &ctx.accounts.authority.key().to_bytes()[..], 
-                &[ctx.accounts.campaign_account.bump]
-            ];
+        **ctx
+            .accounts
+            .campaign_account
+            .to_account_info()
+            .try_borrow_mut_lamports()? -= withdraw_amount;
 
-        let debtor = &mut ctx.accounts.campaign_account;
-        let creditor = &mut ctx.accounts.authority;
-        let system_program = &ctx.accounts.system_program;
+        **ctx.accounts.authority.try_borrow_mut_lamports()? += withdraw_amount;
 
-        invoke_signed(
-            &system_instruction::transfer(
-                &debtor.key(),
-                &creditor.key(), 
-                withdraw_amount),
-            &[
-                debtor.to_account_info().clone(),
-                creditor.to_account_info().clone(),
-                system_program.to_account_info().clone(),
-            ],
-            &[&seeds[..]]
-        )?;
+        ctx.accounts.campaign_account.amount_donated -= withdraw_amount;
 
         Ok(())
     }
