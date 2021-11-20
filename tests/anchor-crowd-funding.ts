@@ -94,7 +94,7 @@ describe('anchor-crowd-funding', () => {
   });
 
 
-  it ('donating from campaignAuthority to both campaigns...', async () => {
+  it ('donating from campaignAuthority1 to both campaigns...', async () => {
 
     let accounts = await program.provider.connection.getProgramAccounts(program.programId)
     let campaignAuthority1_pk = campaignAuthority1.publicKey;
@@ -121,7 +121,44 @@ describe('anchor-crowd-funding', () => {
 
       let balance = await program.provider.connection.getBalance(campaignAccount)
       console.log("Balance of", campaignAccount.toString(), "is", balance/LAMPORTS_PER_SOL)
+    
+      console.log("Total donors to", campaignAccount.toString(), "are", account.contributors.map(c=> c.toString()))
+
     }
+
+  });
+
+  it ('donating from campaignAuthority2 to owned campaign...', async () => {
+
+    let accounts = await program.provider.connection.getProgramAccounts(program.programId)
+    let campaignAuthority2_pk = campaignAuthority2.publicKey;
+
+    const [campaignAccount, bump] = await anchor.web3.PublicKey.findProgramAddress(
+      [campaignAuthority2.publicKey.toBuffer()],
+      program.programId
+    );
+
+    let donation = 1 * LAMPORTS_PER_SOL
+
+    const tx = await program.rpc.donate(
+      new anchor.BN(donation), {
+        accounts: {
+          authority: campaignAuthority2_pk,
+          campaignAccount: campaignAccount,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        },
+        signers: [campaignAuthority2]
+      }
+    );
+
+    // tests
+    const account = await program.account.campaignAccount.fetch(campaignAccount);
+    console.log("Amount donated to",campaignAccount.toString() ,"is", new anchor.BN(account.amountDonated).toNumber()/LAMPORTS_PER_SOL)
+
+    let balance = await program.provider.connection.getBalance(campaignAccount)
+    console.log("Balance of", campaignAccount.toString(), "is", balance/LAMPORTS_PER_SOL)
+      
+    console.log("Total donors to", campaignAccount.toString(), "are", account.contributors.map(c=> c.toString()))
 
   });
 
@@ -159,7 +196,6 @@ describe('anchor-crowd-funding', () => {
   it('withdrawing from not owned campaign (should fail) ...', async () => {
 
     let campaignAuthority1_pk = campaignAuthority1.publicKey;
-    let campaignAuthority2_pk = campaignAuthority2.publicKey;
     const [campaignAccount, bump] = await anchor.web3.PublicKey.findProgramAddress(
       [campaignAuthority2.publicKey.toBuffer()],
       program.programId

@@ -23,6 +23,7 @@ pub mod anchor_crowd_funding {
         ctx.accounts.campaign_account.image_link = image_link;
         ctx.accounts.campaign_account.amount_donated = 0;
         ctx.accounts.campaign_account.bump = bump;
+        ctx.accounts.campaign_account.contributors = [].to_vec();
 
         Ok(())
     }
@@ -35,19 +36,19 @@ pub mod anchor_crowd_funding {
 
         println!("Donating!");
 
-        let debtor = &mut ctx.accounts.authority;
-        let creditor = &mut ctx.accounts.campaign_account;
+        let from = &mut ctx.accounts.authority;
+        let to = &mut ctx.accounts.campaign_account;
         let system_program = &ctx.accounts.system_program;
 
         invoke(
             &system_instruction::transfer(
-                &debtor.key(),
-                &creditor.key(), 
+                &from.key(),
+                &to.key(), 
                 donation
             ),
             &[
-                debtor.to_account_info().clone(),
-                creditor.to_account_info().clone(),
+                from.to_account_info().clone(),
+                to.to_account_info().clone(),
                 system_program.to_account_info().clone(),
             ]
         )?;
@@ -55,6 +56,7 @@ pub mod anchor_crowd_funding {
         let campaign_account = &mut ctx.accounts.campaign_account;
 
         campaign_account.amount_donated += donation;
+        campaign_account.contributors.push(from.key());
 
         Ok(())
     }
@@ -136,6 +138,7 @@ pub struct CampaignAccount {
     pub description: String,
     pub image_link: String,
     pub amount_donated: u64,
+    pub contributors: Vec<Pubkey>,
     pub bump: u8,
 }
 
